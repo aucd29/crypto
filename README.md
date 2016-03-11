@@ -2,9 +2,11 @@
 
 Add it to your build.gradle with:
 ```gradle
-repositories {
-    	jcenter()
-    	maven { url "https://jitpack.io" }
+allprojects {
+    repositories {
+        jcenter()
+        maven { url "https://jitpack.io" }
+    }
 }
 ```
 
