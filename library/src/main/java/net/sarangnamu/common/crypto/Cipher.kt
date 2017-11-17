@@ -2,6 +2,8 @@ package net.sarangnamu.common.crypto
 
 import android.text.TextUtils
 import org.slf4j.LoggerFactory
+import java.security.PrivateKey
+import java.security.PublicKey
 import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
@@ -13,6 +15,9 @@ import kotlin.experimental.and
 
 class Crypto {
     private val log = LoggerFactory.getLogger(Cipher::class.java)
+
+    var publicKey: PublicKey? = null
+    var privateKey: PrivateKey? = null
 
     fun execute(params: Params): String? {
         try {
@@ -53,6 +58,10 @@ class Crypto {
 
         fun blowfish() {
             type = "Blowfish"
+        }
+
+        fun rsa() {
+            type = "RSA";
         }
 
         fun decrypt() {
