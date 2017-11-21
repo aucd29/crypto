@@ -15,13 +15,13 @@ Step 2. Add the dependency
 
 ```gradle
 dependencies {
-	    compile 'com.github.aucd29:crypto:1.0.0'
+    compile 'com.github.aucd29:crypto:1.0.0'
 }
 ```
 ```gradle
 # kotlin
 dependencies {
-    compile 'com.github.aucd29:crypto:2.0.0'
+    implementation 'com.github.aucd29:crypto:2.0.0'
 }
 ```
 
