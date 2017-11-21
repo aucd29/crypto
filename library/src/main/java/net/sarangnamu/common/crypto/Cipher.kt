@@ -2,12 +2,13 @@ package net.sarangnamu.common.crypto
 
 import android.text.TextUtils
 import org.slf4j.LoggerFactory
-import java.security.PrivateKey
-import java.security.PublicKey
+import java.security.*
+import java.security.spec.PKCS8EncodedKeySpec
+import java.security.spec.X509EncodedKeySpec
 import javax.crypto.Cipher
+import javax.crypto.KeyGenerator
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
-import kotlin.experimental.and
 
 /**
  * Created by <a href="mailto:aucd29@hanwha.com">Burke Choi</a> on 2017. 11. 2.. <p/>
@@ -16,27 +17,12 @@ import kotlin.experimental.and
 class Crypto {
     private val log = LoggerFactory.getLogger(Cipher::class.java)
 
-    var publicKey: PublicKey? = null
-    var privateKey: PrivateKey? = null
-
-    fun execute(params: Params): String? {
+    fun encrypt(params: Params): String? {
         try {
-            val cipher  = Cipher.getInstance(params.type)
-            val keySpec = SecretKeySpec(params.key.toByteArray(), params.type)
+            val mode = Cipher.ENCRYPT_MODE
 
-            params.iv?.let {
-                cipher.init(params.mode, keySpec, IvParameterSpec(it.toByteArray()))
-            } ?: cipher.init(params.mode, keySpec)
-
-            when (params.mode) {
-                Cipher.ENCRYPT_MODE -> {
-                    return cipher.doFinal(params.data.toByteArray()).toHexString()
-                }
-
-                Cipher.DECRYPT_MODE -> {
-                    return cipher.doFinal(params.data.hexStringToByteArray()).toString(charset("UTF-8"))
-                }
-            }
+            params.init(mode)
+            return params.execute(mode)
         } catch (e: Exception) {
             log.error("ERROR: ${e.message}")
         }
@@ -44,36 +30,125 @@ class Crypto {
         return null
     }
 
-    class Params {
-        lateinit var type: String
-        lateinit var data: String
-        lateinit var key : String
+    fun decrypt(params: Params): String? {
+        try {
+            val mode = Cipher.DECRYPT_MODE
 
-        var mode : Int = Cipher.ENCRYPT_MODE
+            params.init(mode)
+            return params.execute(mode)
+        } catch (e: Exception) {
+            log.error("ERROR: ${e.message}")
+        }
+
+        return null
+    }
+
+    open class Params {
+        lateinit var cipher: Cipher
+        lateinit var transformation: String
+        lateinit var algorithm: String
+        lateinit var data: String
+        lateinit var key : Key
+
         var iv: String? = null
 
         fun des() {
-            type = "DES"
+            transformation = "DES"
+            algorithm  = "DES"
         }
 
         fun blowfish() {
-            type = "Blowfish"
-        }
-
-        fun rsa() {
-            type = "RSA";
+            transformation = "Blowfish"
+            algorithm  = "Blowfish"
         }
 
         fun aes() {
-            type = "AES";
+            transformation = "AES/ECB/PKCS5Padding";
+            algorithm  = "AES"
         }
 
-        fun decrypt() {
-            mode = Cipher.DECRYPT_MODE
+        fun transformation(transformation: String) {
+            this.transformation = transformation
         }
 
-        fun encrypt() {
-            mode = Cipher.ENCRYPT_MODE
+        fun keyGen(keySize: Int = 32) {
+            val keyGen = KeyGenerator.getInstance(algorithm)
+            keyGen.init(keySize, SecureRandom().apply { nextInt() })
+
+            key = keyGen.generateKey()
+        }
+
+        open fun key(key: String? = null) {
+            key?.let {
+                this.key = SecretKeySpec(it.toByteArray(), algorithm)
+            }
+        }
+
+        open fun init(mode: Int) {
+            cipher = Cipher.getInstance(transformation)
+
+            iv?.let {
+                cipher.init(mode, key, IvParameterSpec(it.toByteArray()))
+            } ?: this.cipher.init(mode, key)
+        }
+
+        fun execute(mode: Int): String? {
+            when (mode) {
+                Cipher.ENCRYPT_MODE ->
+                    return cipher.doFinal(data.toByteArray()).toHexString()
+
+                Cipher.DECRYPT_MODE ->
+                    return cipher.doFinal(data.hexStringToByteArray()).toString(charset("UTF-8"))
+            }
+
+            return null
+        }
+    }
+
+    class RsaParams : Params() {
+        var privateKey: PrivateKey
+        var publicKey: PublicKey
+
+        init {
+            this.transformation = "RSA/ECB/PKCS1Padding";
+            this.algorithm      = "RSA";
+
+            val keyGen     = KeyPairGenerator.getInstance(algorithm)
+            val keyPair    = keyGen.generateKeyPair()
+            val publicKey  = keyPair.public
+            val privateKey = keyPair.private
+            val factory    = KeyFactory.getInstance(algorithm)
+
+            this.privateKey = factory.generatePrivate(PKCS8EncodedKeySpec(privateKey.encoded))
+            this.publicKey  = factory.generatePublic(X509EncodedKeySpec(publicKey.encoded))
+        }
+
+        override fun init(mode: Int) {
+            cipher = Cipher.getInstance(transformation)
+
+            when (mode) {
+                Cipher.ENCRYPT_MODE -> this.key = this.publicKey
+                Cipher.DECRYPT_MODE -> this.key = this.privateKey
+            }
+
+            cipher.init(mode, this.key)
+        }
+
+        override fun key(key: String?) {
+
+        }
+
+        fun publicKeyString(): String? {
+            return this.publicKey.encoded.toHexString()
+        }
+
+        fun publicKey(publicKey: PublicKey) {
+            this.publicKey = publicKey
+        }
+
+        fun publicKey(publicKey: String) {
+            val keySpec = X509EncodedKeySpec(publicKey.hexStringToByteArray())
+            this.publicKey = KeyFactory.getInstance(algorithm).generatePublic(keySpec)
         }
     }
 }
