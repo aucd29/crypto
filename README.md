@@ -21,7 +21,7 @@ dependencies {
 ```gradle
 # kotlin
 dependencies {
-    compile 'com.github.aucd29:common:2.0.0'
+    compile 'com.github.aucd29:crypto:2.0.0'
 }
 ```
 
