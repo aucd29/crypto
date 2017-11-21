@@ -11,10 +11,10 @@ import java.security.MessageDigest
  * Created by <a href="mailto:aucd29@hanwha.com">Burke Choi</a> on 2017. 11. 2.. <p/>
  */
 
-private val MD5     = "MD5"
-private val SHA1    = "SHA-1"
-private val SHA256  = "SHA-256"
-private val SHA512  = "SHA-512"
+private val MD5    = "MD5"
+private val SHA1   = "SHA-1"
+private val SHA256 = "SHA-256"
+private val SHA512 = "SHA-512"
 
 ////////////////////////////////////////////////////////////////////////////////////
 //

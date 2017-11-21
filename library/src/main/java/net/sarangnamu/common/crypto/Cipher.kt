@@ -64,6 +64,10 @@ class Crypto {
             type = "RSA";
         }
 
+        fun aes() {
+            type = "AES";
+        }
+
         fun decrypt() {
             mode = Cipher.DECRYPT_MODE
         }
